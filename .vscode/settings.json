@@ -10,5 +10,6 @@
     "opencc",
     "postgres",
     "ttrss"
-  ]
+  ],
+  "frontMatter.content.pageFolders": []
 }

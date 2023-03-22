@@ -9,6 +9,10 @@ RUN apk add --update tar curl git \
 # Download plugins
 WORKDIR /var/www/plugins.local
 
+## mailer-smtp highlightjs 
+RUN git clone --progress -v --depth 1 "https://dev.tt-rss.org/tt-rss/ttrss-mailer-smtp.git" /var/www/plugins/mailer-smtp && \
+  git clone --progress -v --depth 1 "https://dev.tt-rss.org/tt-rss/ttrss-highlightjs.git" /var/www/plugins/highlightjs
+
 ## Fever
 RUN mkdir /var/www/plugins/fever && \
   curl -sL https://github.com/DigitalDJ/tinytinyrss-fever-plugin/archive/master.tar.gz | \
