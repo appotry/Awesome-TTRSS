@@ -3,7 +3,6 @@
 ![Docker Pulls](https://img.shields.io/docker/pulls/wangqiru/ttrss.svg)
 ![Docker Stars](https://img.shields.io/docker/stars/wangqiru/ttrss.svg)
 ![Docker Automated build](https://img.shields.io/docker/automated/wangqiru/ttrss.svg)
-![Docker Build Status](https://img.shields.io/docker/build/wangqiru/ttrss.svg)
 ![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FHenryQW%2FAwesome-TTRSS.svg?type=shield)
 
 ## About
@@ -68,13 +67,22 @@ docker run -it --name ttrss --restart=always \
 - DISABLE_USER_IN_DAYS: disable feed update for inactive users after X days without login, until the user performs a login
 - FEED_LOG_QUIET: `true` will disable the printing of feed updating logs
 
-For more environment variables, please refer to the [official tt-rss repo](https://git.tt-rss.org/fox/tt-rss/src/branch/master/classes/config.php).
+For more environment variables, please refer to the [official tt-rss repo](https://git.tt-rss.org/fox/tt-rss.git/tree/classes/config.php).
 
 ### Configure HTTPS
 
-TTRSS container itself doesn't handle HTTPS traffic. An example of configuring an Nginx reverse proxy with free SSL certificate from [Let's Encrypt](https://letsencrypt.org/) is shown below:
+TTRSS container itself doesn't handle HTTPS traffic. Examples of configuring a Caddy or an Nginx reverse proxy with free SSL certificate from [Let's Encrypt](https://letsencrypt.org/) are shown below:
 
 ```nginx
+# Caddyfile
+ttrssdev.henry.wang {
+    reverse_proxy 127.0.0.1:181
+    encode zstd gzip
+}
+```
+
+```nginx
+# nginx.conf
 upstream ttrssdev {
     server 127.0.0.1:181;
 }
@@ -92,9 +100,6 @@ server {
 
     ssl_certificate /etc/letsencrypt/live/ttrssdev.henry.wang/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/ttrssdev.henry.wang/privkey.pem;
-
-    access_log /var/log/nginx/ttrssdev_access.log combined;
-    error_log  /var/log/nginx/ttrssdev_error.log;
 
     location / {
         proxy_redirect off;
@@ -116,31 +121,6 @@ server {
         proxy_temp_file_write_size  64k;
     }
 }
-```
-
-If you want to place TTRSS under a subdirectory, such as `https://mydomain.com/ttrss`, please refer to the following：
-
-```nginx
-    location /ttrss/ {
-        rewrite /ttrss/(.*) /$1 break;
-        proxy_redirect https://$http_host https://$http_host/ttrss;
-        proxy_pass http://ttrssdev;
-
-        proxy_set_header  Host                $http_host;
-        proxy_set_header  X-Real-IP           $remote_addr;
-        proxy_set_header  X-Forwarded-Ssl     on;
-        proxy_set_header  X-Forwarded-For     $proxy_add_x_forwarded_for;
-        proxy_set_header  X-Forwarded-Proto   $scheme;
-        proxy_set_header  X-Frame-Options     SAMEORIGIN;
-
-        client_max_body_size        100m;
-        client_body_buffer_size     128k;
-
-        proxy_buffer_size           4k;
-        proxy_buffers               4 32k;
-        proxy_busy_buffers_size     64k;
-        proxy_temp_file_write_size  64k;
-    }
 ```
 
 **🔴 Please note that [the value in you `SELF_URL_PATH` should be changed as well.](#supported-environment-variables)**
@@ -182,7 +162,7 @@ service.mercury:
 
 ## Database Upgrade or Migration
 
-Postgres major upgrades will require some manual operations.
+Postgres major version upgrades (13->14) will require some manual operations.
 Sometimes breaking changes will be introduced to further optimize Awesome TTRSS.
 
 ### Steps
@@ -190,32 +170,34 @@ Sometimes breaking changes will be introduced to further optimize Awesome TTRSS.
 This section demonstrates the steps to upgrade Postgres major version (from 12.x to 13.x) or migrate from other images to postgres:alpine.
 
 1. Stop all the service containers:
+
    ```bash
    docker-compose stop
    ```
+
 1. Copy the Postgres data volume `~/postgres/data/` (or the location specified in your docker-compose file) to somewhere else as a backup, **THIS IS IMPORTANT**.
 1. Use the following command to dump all your data:
+
    ```bash
    docker exec postgres pg_dumpall -c -U YourUsername > export.sql
    ```
+
 1. Delete the Postgres data volume `~/postgres/data/`.
 1. Update your docker-compose file (**Note that the `DB_NAME` must not be changed**) with `database.postgres` section in the the latest [docker-compose.yml](https://github.com/HenryQW/Awesome-TTRSS/blob/main/docker-compose.yml), and bring it up:
+
    ```bash
    docker-compose up -d
    ```
+
 1. Use the following command to restore all your data:
+
    ```bash
    cat export.sql | docker exec -i postgres psql -U YourUsername
    ```
+
 1. Test if everything works fine, and now you may remove the backup in step 2.
 
-The legacy docker-compose file (supports Postgres 12) is [archived as docker-compose.pg12.yml](https://github.com/HenryQW/Awesome-TTRSS/blob/main/docker-compose.pg12.yml), and will no longer be maintained.
-
 ## Plugins
-
-### [Effective Config](https://git.tt-rss.org/fox/ttrss-prefs-effective-config)
-
-Enable via Preferences → Plugins, and navigate to Preferences → System → Effective Config for viewing all live environment variables of your TTRSS instance.
 
 ### [Mercury Fulltext Extraction](https://github.com/HenryQW/mercury_fulltext)
 
@@ -314,6 +296,23 @@ Refer to [Remove iframe sandbox](https://github.com/DIYgod/ttrss-plugin-remove-i
 Save articles to Wallabag.
 
 Refer to [Wallabag v2](https://github.com/joshp23/ttrss-to-wallabag-v2)。
+
+### [Auth OIDC](https://dev.tt-rss.org/tt-rss/ttrss-auth-oidc)
+
+This is a system plugin, that allow users to connect through an oidc provider, like Keycloak, to TTRSS. 
+
+System plugin, enabled by adding `auth_oidc` to the environment variable **ENABLE_PLUGINS**.
+
+Then add the following environments variables with according values : 
+
+    ```yaml
+        AUTH_OIDC_NAME: 'IDP provider name displayed'
+        AUTH_OIDC_URL: 'https://oidc.hostname.com'
+        AUTH_OIDC_CLIENT_ID: 'test-rss'
+        AUTH_OIDC_CLIENT_SECRET: 'your-secret-token'
+    ```
+    
+Refer to [Auth OIDC](https://dev.tt-rss.org/tt-rss/ttrss-auth-oidc) for more details.
 
 ## Themes
 
