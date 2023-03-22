@@ -3,6 +3,10 @@ name: "[builder] CI for releases"
 on:
   repository_dispatch:
     types: build
+  release:
+    types: [published]
+  watch:
+    types: [started]
   push:
     branches:
       - main
