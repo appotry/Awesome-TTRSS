@@ -9,9 +9,10 @@ RUN apk add --update tar curl git \
 # Download plugins
 WORKDIR /var/www/plugins.local
 
-## highlightjs share-mailto
-RUN git clone --progress -v --depth 1 "https://dev.tt-rss.org/tt-rss/ttrss-highlightjs.git" /var/www/plugins.local/highlightjs && \
-  git clone --progress -v --depth 1 "https://dev.tt-rss.org/tt-rss/ttrss-share-mailto.git" /var/www/plugins.local/share-mailto
+## mailer-smtp highlightjs share-mailto
+# RUN git clone --progress -v --depth 1 "https://dev.tt-rss.org/tt-rss/ttrss-mailer-smtp.git" /var/www/plugins.local/mailer-smtp && \
+#   git clone --progress -v --depth 1 "https://dev.tt-rss.org/tt-rss/ttrss-highlightjs.git" /var/www/plugins.local/highlightjs && \
+#   git clone --progress -v --depth 1 "https://dev.tt-rss.org/tt-rss/ttrss-share-mailto.git" /var/www/plugins.local/share-mailto
 
 ## Fever
 RUN mkdir /var/www/plugins/fever && \
