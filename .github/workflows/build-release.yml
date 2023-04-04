@@ -37,10 +37,7 @@ jobs:
           images: bloodstar/ttrss
           tags: |
             latest
-            latest-${{ github.run_number }}
-            latest-${{ github.sha }}
-            latest-${{ env.DATE }}
-          include-datetime: false
+            type=schedule,pattern={{date 'YYYYMMDD'}}
 
       - name: Login to DockerHub
         uses: docker/login-action@v2 
