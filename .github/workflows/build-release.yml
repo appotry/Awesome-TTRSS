@@ -37,7 +37,7 @@ jobs:
           images: bloodstar/ttrss
           tags: |
             latest
-            type=schedule,pattern={{date 'YYYYMMDD'}}
+            type=schedule,pattern={{date 'YYYY-MM-DD'}}
             type=semver,pattern={{raw}}
 
       - name: Login to DockerHub
