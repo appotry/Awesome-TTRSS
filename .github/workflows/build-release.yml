@@ -55,6 +55,6 @@ jobs:
           # platforms: linux/amd64
           context: .
           push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.generate_tag.outputs.tags }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           
